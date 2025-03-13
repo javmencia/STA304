@@ -330,19 +330,20 @@ phone <- phone %>%
 
 # Step 5: Ensure No NA Values in `samp_wt`
 phone <- phone %>%
-  mutate(samp_wt = ifelse(is.na(samp_wt), mean(samp_wt, na.rm = TRUE), samp_wt))  # Replace NA with mean
+  mutate(samp_wt = ifelse(is.na(samp_wt), mean(samp_wt, na.rm = TRUE), samp_wt),
+         sex = ifelse(gender == 1, "Male", "Female"))  # Replace NA with mean
 
 # Step 6: Define the Survey Design with Stratification and Weights
 phone_design <- svydesign(
   id = ~1,
-  strata = ~gender,   # Stratifying by gender
+  strata = ~sex,   # Stratifying by gender
   weights = ~samp_wt, # Using computed weights
   fpc = ~pop_fpc,     # Applying finite population correction
   data = phone
 )
 
 # Step 7: Run the Survey-Weighted Logistic Regression Model
-mod_phone <- svyglm(voteliberal ~ gender + age,  # No strata variable
+mod_phone <- svyglm(voteliberal ~ sex + age,  # No strata variable
                      family = binomial, 
                      design = phone_design)
 
