@@ -1,0 +1,396 @@
+---
+title: "Are Women More Likely To Vote Liberal?"
+author: "GROUP NUMBER: 77"
+subtitle: "STA304 - Winter 2025 - Assignment 2"
+format: pdf
+documentclass: article
+editor: visual
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE) 
+
+# Here you can load in and clean the data (you may need to do the cleaning in a separate R script - this is up to you). 
+library(dplyr)
+library(survey)
+library(knitr)
+library(kableExtra)
+library(sjPlot)
+library(tidyverse)
+phone_data <- read_csv("ces_phone.csv")
+
+# You may need additional chunks, in case you want to include some of the cleaning output.
+
+```
+
+# 1 Introduction
+
+In this section you will briefly describe your report. Explain the importance of the subsequent analysis and prepare the reader for what they will read in the subsequent sections. Provide an overview of the research question. Briefly describe the 2019 Canadian Federal Election Study and its relevance. State the purpose and goals/hypotheses of the report.
+
+Elections are a cornerstone of democracy, and understanding voter behavior is crucial for predicting outcomes and interpreting political trends. Election polls not only reflect public opinion but can also influence voter turnout and vote choice (Dahlgaard, 2017). However, the validity of these polls depends on how data is collected. Phone surveys may oversample certain demographics due to selection bias, while web surveys are prone to coverage errors and self-selection biases (Harrison, 2023). These methodological differences can shape demographic distributions and affect the conclusions drawn from the data.
+
+Knowing the liberals won the election, we would like to gain some insights on the demographic breakdown of their votes This study investigates the effect of **gender** on the **intention to vote Liberal**, using data from the 2019 Canadian Election Study (CES). Females tend to have higher intention to vote for liberal parties, given that these parties are generally characterized by support for ... . Investigating the relationship between gender and liberal voting intention shows us how socioeconomic factors influence political preferences, particularly in the context of growing ideological polarization.
+
+Overall, by exploring how the distribution in the study's participants' education level and the proportion of people intending to vote for the liberal party can help us assess potential biases introduced by survey methodology. Hence this study contributes to a deeper understanding of voter behavior and the importance of survey design in political research.
+
+# 2 Data
+
+Briefly introduce the data and key variables of interest. If you do any general data cleaning or data processing you should describe it (in a reproducible manner) here. Identify the stratification variable used. Include at least one plot displaying the distribution of the strata variable. If you do any data cleaning or data processing to the you should describe it (in a reproducible manner) in this section.
+
+The analysis draws from the 2019 Canadian Federal Election Study (CES), which was collected using stratitifed random sampling by gender. Total male population and total female population were retrieved from the 2021 Census of Population Statistics Canada. In 2021, 50.7% of the Canadian population were women (18.77 million out of 37.6 million). For the CES, data was obtained via a phone survey where 2,769 responses were obtained with only 41.7% of the respondents being female. The participants were asked a series of questions regarding their sociodemographic background and their intent to vote in the upcoming election, including interest in the election, likelihood to vote, and intended vote choice.
+
+In this study, the data cleaning involved two main steps. First, we dichotomized the primary outcome variable, voting intention for the people's party. Second, entries with missing or invalid responses for intended party or gender were excluded. Additionally, only male and female responders were considered given the small number of people in the other gender categories. The 'other' category had a very small sample size, which could limit meaningful statistical analysis and may have led to unreliable estimates. Given this, we chose to exclude this category to ensure more stable and interpretable results. We acknowledge that this decision reduces the inclusivity of our analysis and may overlook important differences in experiences. Future research with a larger and more representative sample should aim to better capture gender diversity.
+
+```{r, include = FALSE}
+phone <- phone_data%>%
+  rename(gender = q3,
+         province = q4,
+         educ = q61,
+         elecinterest = q9,
+         intentvote = q10,
+         intentparty = q11)%>%
+  filter(intentparty != -9 & intentparty != -8 & intentparty != is.na(intentparty),
+         educ != -9 & educ != -8 & educ != -7)%>% # Removing people who 
+  mutate(source = "Phone",
+         voteliberal = ifelse(intentparty == 1, 1, 0))
+
+# Handle single PSU strata (avoids errors if only one observation in a stratum)
+options(survey.lonely.psu = "adjust")
+
+# Step 1: Assign Finite Population Correction (`pop_fpc`) for Gender Groups
+phone <- phone %>%
+  filter(gender %in% c("1", "2")) %>%  # Keep only Male (1) and Female (2)
+  mutate(
+    gender = as.character(gender),  # Ensure gender is a character
+    pop_fpc = case_when(
+      gender == "1" ~ 18226240,   # Total Male Population from StatsCan
+      gender == "2" ~ 18765740    # Total Female Population from StatsCan
+    )
+  )
+
+# Step 2: Ensure No NA Values in `pop_fpc`
+phone <- phone %>%
+  mutate(pop_fpc = ifelse(is.na(pop_fpc), mean(pop_fpc, na.rm = TRUE), pop_fpc),
+         voteliberal = ifelse(intentparty == 1, 1, 0))  # Replace NA with mean
+
+```
+
+Be sure to have text describing any plots or tables included.
+
+```{r, echo = FALSE}
+
+# Use this to create your plots/visualization. 
+
+plot_data <- phone %>%
+  group_by(source, gender, voteliberal) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  mutate(voteliberal = factor(voteliberal, levels = c(0, 1), labels = c("Non-Liberal", "Liberal")))
+
+# Create a stacked bar plot
+ggplot(plot_data, aes(x = factor(gender, levels = c(1, 2), labels = c("Male", "Female")), 
+                      y = count, fill = voteliberal)) +
+  geom_bar(stat = "identity", color = "black") +  # Stacked bars
+  facet_wrap(~ source) +  # Separate plots for Web and Phone surveys
+  scale_fill_manual(values = c("Non-Liberal" = "gray70", "Liberal" = "red")) +  
+  labs(title = "Vote Choice by Gender and Survey Type",
+       x = "Gender",
+       y = "Number of Respondents",
+       fill = "Vote Choice") +
+  theme_minimal()
+
+```
+
+# 3 Methods
+
+This study investigates whether gender influences the likelihood of voting for the Liberal Party, using data from the 2019 Canadian Federal Election Study (CES), which was collected through stratified random sampling. Since stratified sampling ensures representation across key subgroups, all statistical estimates—including the proportion of Liberal voters and the logistic regression model predicting voting likelihood—account for survey weighting and finite population correction (FPC) (Lohr, 2019).
+
+To estimate the proportion of Liberal voters, we use a weighted mean across strata. The estimated proportion is calculated as:
+
+$$\hat{p}_{st} = \sum_{h=1}^{H} W_h \hat{p}_h$$
+
+where $H$ represents the number of strata (e.g., provinces or education levels), $W_h = N_h / N$ is the stratum weight based on its share of the total population, and $\hat{p}_h$ is the proportion of Liberal voters within each stratum. The 95% confidence interval (CI) is given by:
+
+$$CI = \hat{p}_{st} \pm z_{\alpha/2} \sqrt{ \sum_{h=1}^{h} W_h^2 \left( 1 - \frac{n_h}{N_h} \right) \left( \frac{\hat{p}_h(1-\hat{p}_h)}{n_h} \right) }$$
+
+where $n_h$ is the sample size within each stratum, $N_h$ is the population size in that stratum, and $(1 - n_h / N_h)$ is the finite population correction (FPC), which accounts for cases where the sample represents a substantial fraction of the population. This formula is referenced from Ziegel, E. R., & Lohr, S. L. (2000). Sampling: Design and Analysis. *Technometrics*. Without this adjustment, confidence intervals could be overly wide, leading to inflated uncertainty.
+
+To analyze the relationship between gender and voting preference, we fit a survey-weighted logistic regression model, which adjusted for stratification effects and unequal selection probabilities. Since the dependent variable (voting for the Liberal Party) was binary (1 = Yes, 0 = No), logistic regression was the appropriate modeling choice (Lumley, 2010). The model is specified as:
+
+$$\log\left(\frac{P(VoteLiberal = 1)}{1 - P(VoteLiberal = 1)}\right) = \beta_0 + \beta_1 \times \text{Gender}_{\text{female}} + \beta_2 \times \text{Age}$$\
+
+Here, $\beta_1$ represents the effect of gender. If the corresponding odds ratio $e^{\beta_1}$ is greater than 1, it suggests that women are more likely to vote for the Liberal Party compared to men. If the odds ratio is less than 1, it suggests women are less likely to vote Liberal compared to men. Similarly, $\beta_2$ captures the influence of age. An odds ratio greater than 1 indicates that an increase in age is associated with a higher likelihood of voting for the Liberal Party, while an odds ratio less than 1 suggests the opposite.
+
+Since the dataset was collected using stratified sampling, failing to account for this in the regression model would lead to biased coefficient estimates and incorrect standard errors. We apply survey-weighted logistic regression (svyglm()) from the survey package in R, incorporating design weights and finite population correction (Lumley, 2010).
+
+# 4 Results
+
+Present a table showing the estimated proportion of votes for the selected party along with the 95% confidence interval, and include text describing this table and the key takeaways.
+
+```{r, include = FALSE}
+phone <- phone %>%
+  group_by(gender) %>%
+  mutate(
+    n_h = n(),  # Sample size per gender group
+    samp_wt = pop_fpc / n_h  # Compute survey weight
+  ) %>%
+  ungroup()
+
+# Step 5: Ensure No NA Values in `samp_wt`
+phone <- phone %>%
+  mutate(samp_wt = ifelse(is.na(samp_wt), mean(samp_wt, na.rm = TRUE), samp_wt))  # Replace NA with mean
+
+# Step 6: Define the Survey Design with Stratification and Weights
+phone_design <- svydesign(
+  id = ~1,
+  strata = ~gender,   # Stratifying by gender
+  weights = ~samp_wt, # Using computed weights
+  fpc = ~pop_fpc,     # Applying finite population correction
+  data = phone
+)
+
+# Step 7: Run the Survey-Weighted Logistic Regression Model
+mod_phone <- svyglm(voteliberal ~ gender + age,  # No strata variable
+                     family = binomial, 
+                     design = phone_design)
+
+# Step 8: Display the Model Summary
+summary(mod_phone)
+
+# Step 9: Format and Display the Logistic Regression Table
+# Extract model coefficients
+model_results <- summary(mod_phone)$coefficients
+model_results <- as.data.frame(model_results)
+
+# Rename columns for clarity
+colnames(model_results) <- c("Estimate", "Std. Error", "z value", "p-value")
+
+# Bold significant p-values
+model_results$`p-value` <- ifelse(model_results$`p-value` < 0.05, 
+                                  paste0("**", sprintf("%.4f", model_results$`p-value`), "**"), 
+                                  sprintf("%.4f", model_results$`p-value`))
+
+# Create a formatted table
+kable(model_results, format = "latex", caption = "Survey-Weighted Logistic Regression Results") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover")) %>%
+  column_spec(2:4, bold = TRUE) %>%
+  add_footnote("Significant p-values (<0.05) are bolded for clarity.")
+
+```
+
+```{r}
+###
+#CON INT INTENTO nuevo
+###inteot a ver qpdo
+# Load necessary libraries
+
+
+
+# Step 3: Compute Survey Weights (`samp_wt`) Correctly
+phone <- phone %>%
+  group_by(gender) %>%
+  mutate(n_h = n()) %>%  # Compute sample size per gender group first
+  ungroup() %>%
+  mutate(samp_wt = pop_fpc / n_h)  # Compute survey weight
+
+# Step 4: Ensure No NA or Infinite Values in `samp_wt`
+phone <- phone %>%
+  mutate(samp_wt = ifelse(is.na(samp_wt) | is.infinite(samp_wt), mean(samp_wt, na.rm = TRUE), samp_wt))  # Replace NA/Inf
+
+# Step 5: Define the Survey Design with Stratification and Weights
+phone_design <- svydesign(
+  id = ~1,
+  strata = ~gender,   # Stratifying by gender
+  weights = ~samp_wt, # Using computed weights
+  fpc = ~pop_fpc,     # Applying finite population correction
+  data = phone
+)
+
+# Step 6: Compute Stratified Proportion Estimate and Confidence Interval
+calculate_stratified_ci <- function(design, variable) {
+  # Compute estimated proportion per stratum
+  prop_estimate <- svymean(as.formula(paste0("~", variable)), design)
+  
+  # Extract stratum-level proportions
+  svy_design_vars <- as.data.frame(svyby(~voteliberal, ~gender, design, svymean))
+
+  # Extract confidence interval components
+  ci <- confint(prop_estimate)
+
+  # Compute stratified confidence interval using the correct formula
+  H <- nrow(svy_design_vars)  # Number of strata
+  W_h <- table(phone$gender) / sum(table(phone$gender))  # Correct stratum weights
+  p_h <- svy_design_vars$`voteliberal`  # Proportion of Liberal voters per stratum
+  n_h <- table(phone$gender)  # Sample size per stratum
+  N_h <- unique(phone$pop_fpc)  # Population size per stratum
+
+  # Compute the variance term inside the square root
+  variance_term <- sum(W_h^2 * (1 - (n_h / N_h)) * ((p_h * (1 - p_h)) / n_h))
+
+  # Compute final confidence interval
+  z_alpha <- qnorm(0.975)  # z-score for 95% CI
+  lower_bound <- coef(prop_estimate)[1] - z_alpha * sqrt(variance_term)
+  upper_bound <- coef(prop_estimate)[1] + z_alpha * sqrt(variance_term)
+  
+  # Return formatted confidence interval
+  list(
+    proportion = coef(prop_estimate)[1],
+    ci_lower = lower_bound,
+    ci_upper = upper_bound
+  )
+}
+
+# Step 7: Compute Stratified Confidence Interval for the Phone Survey
+phone_results <- calculate_stratified_ci(phone_design, "voteliberal")
+
+
+
+# Step 6: Compute Stratified Proportion Estimates and Confidence Intervals by Gender
+calculate_gender_stratified_ci <- function(design, variable) {
+  # Compute estimated proportions and confidence intervals by gender
+  svy_results <- svyby(as.formula(paste0("~", variable)), ~gender, design, svymean, vartype = "ci")
+
+  # Format results into a dataframe
+  results_df <- data.frame(
+    Gender = c("Male", "Female"),
+    `Proportion Voting Liberal` = sprintf("%.3f", svy_results[[2]]),
+    `95% Confidence Interval` = sprintf("(%.3f, %.3f)", svy_results$ci_l, svy_results$ci_u)
+  )
+
+  return(results_df)
+}
+
+# Compute gender-specific results
+gender_results <- calculate_gender_stratified_ci(phone_design, "voteliberal")
+
+# Add the overall proportion row
+overall_results <- data.frame(
+  Gender = "Overall",
+  `Proportion Voting Liberal` = sprintf("%.3f", phone_results$proportion),
+  `95% Confidence Interval` = sprintf("(%.3f, %.3f)", phone_results$ci_lower, phone_results$ci_upper)
+)
+
+# Combine tables
+final_results <- rbind(overall_results, gender_results)
+
+# Print the table
+kable(
+  final_results, 
+  col.names = c("Survey Group", "Proportion Voting Liberal", "95% Confidence Interval"), 
+  align = "c", 
+  caption = "Stratified Confidence Interval for Liberal Voters (Phone Survey)."
+) %>%
+  kable_styling(full_width = FALSE, position = "center", bootstrap_options = c("striped", "hover")) %>%
+  column_spec(2, bold = TRUE) %>%
+  column_spec(3, bold = TRUE) %>%
+  add_footnote("Confidence intervals are stratified by gender and adjusted for finite population correction (FPC).")
+
+
+```
+
+The proportion of respondents in the phone survey who reported voting Liberal was 0.333, with a 95% confidence interval of (0.315, 0.350), indicating that the true population proportion is likely within this range.
+
+```{r}
+###new new
+# Load necessary libraries
+library(dplyr)
+
+
+# Handle single PSU strata
+options(survey.lonely.psu = "adjust")
+
+# Step 1: Remove Gender3 (Keep only Male = "1" and Female = "2")
+phone <- phone %>%
+  filter(gender %in% c("1", "2")) %>%  # Remove incorrect category
+  mutate(gender = as.character(gender))  # Ensure gender is a character
+
+# Step 2: Assign Finite Population Correction (`pop_fpc`) for Gender Groups
+phone <- phone %>%
+  mutate(
+    pop_fpc = case_when(
+      gender == "1" ~ 18226240,   # Total Male Population from StatsCan
+      gender == "2" ~ 18765740    # Total Female Population from StatsCan
+    )
+  )
+
+# Step 3: Ensure No NA Values in `pop_fpc`
+phone <- phone %>%
+  mutate(pop_fpc = ifelse(is.na(pop_fpc), mean(pop_fpc, na.rm = TRUE), pop_fpc))  # Replace NA with mean
+
+# Step 4: Compute Survey Weights (`samp_wt`)
+phone <- phone %>%
+  group_by(gender) %>%
+  mutate(
+    n_h = n(),  # Sample size per gender group
+    samp_wt = pop_fpc / n_h  # Compute survey weight
+  ) %>%
+  ungroup()
+
+# Step 5: Ensure No NA Values in `samp_wt`
+phone <- phone %>%
+  mutate(samp_wt = ifelse(is.na(samp_wt), mean(samp_wt, na.rm = TRUE), samp_wt),
+         sex = ifelse(gender == 1, "Male", "Female"))  # Replace NA with mean
+
+# Step 6: Define the Survey Design with Stratification and Weights
+phone_design <- svydesign(
+  id = ~1,
+  strata = ~sex,   # Stratifying by gender
+  weights = ~samp_wt, # Using computed weights
+  fpc = ~pop_fpc,     # Applying finite population correction
+  data = phone
+)
+
+# Step 7: Run the Survey-Weighted Logistic Regression Model
+mod_phone <- svyglm(voteliberal ~ sex + age,  # No strata variable
+                     family = binomial, 
+                     design = phone_design)
+
+# Step 8: Display the Model Summary
+tab_model(mod_phone)
+
+
+
+```
+
+The results from the survey-weighted logistic regression indicate that gender and age are both significant predictors of voting for the Liberal Party. The odds ratio for gender (female) is 1.27 (95% CI: 1.08–1.49, p = 0.004), suggesting that women have 27% higher odds of voting Liberal compared to men. Since the odds ratio is greater than 1, this indicates a positive association between being female and voting Liberal. Similarly, the odds ratio for age is 1.01 (95% CI: 1.01–1.02, p \< 0.001), implying that older individuals are slightly more likely to vote Liberal. While the effect size for age is small, it is statistically significant.
+
+# 5 Discussion
+
+The analysis reveals that women are more likely to vote liberal, supporting our initial hypothesis with statistically significant results. Findings indicate that women have 27% higher odds of voting Liberal compared to men.
+
+Potential biases may arise from survey self-selection and response bias, as individuals with particular political ideals might be more inclined to participants. Additionally, some relevant variables that could affect voting behavior, such as socioeconomic status or regional differences that might have made more difficult the participation in the surveys. Survey errors, including misreporting or misunderstanding of questions, also present challenges in interpreting the findings.
+
+A notable limitation of the analysis is the exclusion of the “Other” gender category, which resulted in the removal of an entire group from the analysis. This omission restricts our ability to fully understand voting behavior across all gender identities. We acknowledge that future research should not only incorporate a broader range of variables but also place a stronger emphasis on collecting and analyzing a greater number of observations from non-binary or other gender identifications. This approach will provide a more inclusive and comprehensive understanding of voting behavior and improve the generalizability of the conclusions drawn from the data.
+
+# 6 Generative AI Statement
+
+Here is where you can explain your usage of Generative AI tool(s). Be sure to reference any tools with inline citations.
+
+In the completion of this assignment, generative AI (OpenAI, 2025) was used to assist in struc- turing the analysis and generating explanations related to the influence of survey methodology on political preferences. Specifically, AI tools helped draft and refine sections on the potential biases introduced by phone and web surveys, ensuring clarity and conciseness in presenting the comparative analysis. Additionally, AI was used to fix the formatting of visualizations and synthesize my initial draft of the paper before a subsequent re-write from my end, this was done to improve the overall coherence and readability of the final report. The use of gen- erative AI ensured a more streamlined process and provided valuable insights into improving the presentation of data.
+
+# 7 Ethics Statement
+
+The analysis was designed with reproducibility in mind, by thoroughly documenting the methods f the regression and data cleaning. The data cleaning process was explained step-by-step, clearly explaining which observations were not included in the analysis due to the small sample size, how is the data stratified, and which is our startification variable, ensuring that other researchers can precisely replicate our steps to verify the findings.
+
+Since the CES 2019 dataset is publicly accessible and qualifies under U of T’s Research Ethics Policy exemption criteria, our study does not require Research Ethics Board approval for the report to be publicly available. Moreover, the data have been anonymized and does not include direct identifiers, safeguarding the privacy of individual participants while still providing valuable insights into voting behavior.
+
+\newpage
+
+# 8 Bibliography
+
+1.  Allaire, J.J., et. el. *References: Introduction to R Markdown*. RStudio. <https://rmarkdown.rstudio.com/docs/>. (Last Accessed: April 4, 1991)
+
+2.  Dekking, F. M., et al. (2005) *A Modern Introduction to Probability and Statistics: Understanding why and how.* Springer Science & Business Media.
+
+3.  Grolemund, G. (2014, July 16) *Introduction to R Markdown*. RStudio. <https://rmarkdown.rstudio.com/articles_intro.html>. (Last Accessed: April 4, 1991)
+
+4.  Vaughn, B. K. (2008). Data analysis using regression and multilevel/hierarchical models, by Gelman, A., & Hill, J \[Review of *Data analysis using regression and multilevel/hierarchical models, by Gelman, A., & Hill, J*\]. *Journal of Educational Measurement*, *45*(1), 94–97. Blackwell Publishing Inc. <https://doi.org/10.1111/j.1745-3984.2007.00053_2.x>
+
+5.  Ziegel, E. R., & Lohr, S. L. (2000). Sampling: Design and Analysis. *Technometrics*, *42*(2), 223-. <https://doi.org/10.2307/1271491>
+
+6.  
+
+\newpage
+
+# 9 Appendix
+
+Any additional notes/derivations that are supplementary to the report can be added in an appendix. This section will not be directly graded, but may be included for completion-sake.
