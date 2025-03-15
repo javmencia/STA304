@@ -25,21 +25,20 @@ phone_data <- read_csv("ces_phone.csv")
 
 # 1 Introduction
 
-In this section you will briefly describe your report. Explain the importance of the subsequent analysis and prepare the reader for what they will read in the subsequent sections. Provide an overview of the research question. Briefly describe the 2019 Canadian Federal Election Study and its relevance. State the purpose and goals/hypotheses of the report.
 
-Elections are a cornerstone of democracy, and understanding voter behavior is crucial for predicting outcomes and interpreting political trends. Election polls not only reflect public opinion but can also influence voter turnout and vote choice (Dahlgaard, 2017). However, the validity of these polls depends on how data is collected. Phone surveys may oversample certain demographics due to selection bias, while web surveys are prone to coverage errors and self-selection biases (Harrison, 2023). These methodological differences can shape demographic distributions and affect the conclusions drawn from the data.
+Understanding voting behavior is essential for assessing democratic engagement and representation. Prior research has highlighted the importance of sociodemographic factors, including gender, in shaping electoral preferences and participation (Gidengil et al., 2006). In Canada, gender gaps in political attitudes and party preferences have been observed, with studies suggesting that women are more likely to support left-leaning parties compared to men (Frederick et al., 2009). However, the extent to which gender influences voter preferences in specific elections, such as the 2019 Canadian Federal Election, remains an open question.
 
-Knowing the liberals won the election, we would like to gain some insights on the demographic breakdown of their votes This study investigates the effect of **gender** on the **intention to vote Liberal**, using data from the 2019 Canadian Election Study (CES). Females tend to have higher intention to vote for liberal parties, given that these parties are generally characterized by support for ... . Investigating the relationship between gender and liberal voting intention shows us how socioeconomic factors influence political preferences, particularly in the context of growing ideological polarization.
+This study examines the relationship between gender and voting intentions in the 2019 Canadian Federal Election using data from the Canadian Federal Election Study (CES) collected through a phone survey, in particular it looks at whether women were more prone than men to vote for the liberal party. The CES employed a stratified random sampling approach, ensuring representation across the gender groups. However, despite a nearly equal gender distribution in the Canadian population, female respondents were underrepresented in the survey sample, comprising only 41.7% of the 2,769 respondents. The primary outcome of interest in this study is voting intention for the Liberal Party, analyzed in relation to gender
 
-Overall, by exploring how the distribution in the study's participants' education level and the proportion of people intending to vote for the liberal party can help us assess potential biases introduced by survey methodology. Hence this study contributes to a deeper understanding of voter behavior and the importance of survey design in political research.
+The results of this study contribute to the broader literature on gender and voting behavior in Canada, offering insights into the electoral dynamics of the 2019 federal election.
+
+
 
 # 2 Data
 
-Briefly introduce the data and key variables of interest. If you do any general data cleaning or data processing you should describe it (in a reproducible manner) here. Identify the stratification variable used. Include at least one plot displaying the distribution of the strata variable. If you do any data cleaning or data processing to the you should describe it (in a reproducible manner) in this section.
+The analysis draws from the 2019 Canadian Federal Election Study (CES), which was collected using stratitifed random sampling by gender. Gender contained three levels, male, female and other. The total male population and total female population were retrieved from the 2021 Census of Population Statistics Canada. In 2021, 50.7% of the Canadian population were women (18.77 million out of 37.6 million). For the CES, data was obtained via a phone survey where 2,769 responses were obtained with only 41.7% of the respondents being female. The participants were asked a series of questions regarding their sociodemographic background and their intent to vote in the upcoming election, including interest in the election, likelihood to vote, and intended vote choice.
 
-The analysis draws from the 2019 Canadian Federal Election Study (CES), which was collected using stratitifed random sampling by gender. Total male population and total female population were retrieved from the 2021 Census of Population Statistics Canada. In 2021, 50.7% of the Canadian population were women (18.77 million out of 37.6 million). For the CES, data was obtained via a phone survey where 2,769 responses were obtained with only 41.7% of the respondents being female. The participants were asked a series of questions regarding their sociodemographic background and their intent to vote in the upcoming election, including interest in the election, likelihood to vote, and intended vote choice.
-
-In this study, the data cleaning involved two main steps. First, we dichotomized the primary outcome variable, voting intention for the people's party. Second, entries with missing or invalid responses for intended party or gender were excluded. Additionally, only male and female responders were considered given the small number of people in the other gender categories. The 'other' category had a very small sample size, which could limit meaningful statistical analysis and may have led to unreliable estimates. Given this, we chose to exclude this category to ensure more stable and interpretable results. We acknowledge that this decision reduces the inclusivity of our analysis and may overlook important differences in experiences. Future research with a larger and more representative sample should aim to better capture gender diversity.
+In this study, the data cleaning involved three main steps. First, we dichotomized the primary outcome variable, voting intention for the Liberal party. Second, entries with missing or invalid responses for intended party or gender were excluded. Lastly, only male and female responders were considered given the small number of people in the other gender categories. The small sample size of the other category could limit meaningful statistical analysis and may have led to unreliable estimates. Given this, we chose to exclude this category to ensure more stable and interpretable results. We acknowledge that this decision reduced the inclusivity of our analysis and may overlook important differences in experiences. Future research with a larger and more representative sample should aim to better capture gender diversity.
 
 ```{r, include = FALSE}
 phone <- phone_data%>%
@@ -75,7 +74,6 @@ phone <- phone %>%
 
 ```
 
-Be sure to have text describing any plots or tables included.
 
 ```{r, echo = FALSE}
 
@@ -100,6 +98,8 @@ ggplot(plot_data, aes(x = factor(gender, levels = c(1, 2), labels = c("Male", "F
 
 ```
 
+*Note* The bar plot displays vote choice by gender, with the left column representing male respondents. The y-axis shows the number of respondents with that gender, while the colors indicate vote choice: red for Liberal and gray for Non-Liberal. Males have a higher overall response count compared to females, but the proportion of Liberal to Non-Liberal voters seems slightly higher for females, given that the overall number of liberal voters is similar across both genders.
+
 # 3 Methods
 
 This study investigates whether gender influences the likelihood of voting for the Liberal Party, using data from the 2019 Canadian Federal Election Study (CES), which was collected through stratified random sampling. Since stratified sampling ensures representation across key subgroups, all statistical estimates—including the proportion of Liberal voters and the logistic regression model predicting voting likelihood—account for survey weighting and finite population correction (FPC) (Lohr, 2019).
@@ -112,13 +112,13 @@ where $H$ represents the number of strata (e.g., provinces or education levels),
 
 $$CI = \hat{p}_{st} \pm z_{\alpha/2} \sqrt{ \sum_{h=1}^{h} W_h^2 \left( 1 - \frac{n_h}{N_h} \right) \left( \frac{\hat{p}_h(1-\hat{p}_h)}{n_h} \right) }$$
 
-where $n_h$ is the sample size within each stratum, $N_h$ is the population size in that stratum, and $(1 - n_h / N_h)$ is the finite population correction (FPC), which accounts for cases where the sample represents a substantial fraction of the population. This formula is referenced from Ziegel, E. R., & Lohr, S. L. (2000). Sampling: Design and Analysis. *Technometrics*. Without this adjustment, confidence intervals could be overly wide, leading to inflated uncertainty.
+where $n_h$ is the sample size within each stratum, $N_h$ is the population size in that stratum, and $(1 - n_h / N_h)$ is the finite population correction (FPC), which accounts for cases where the sample represents a substantial fraction of the population (Ziegel et al.,2000). Without this adjustment, confidence intervals could be overly wide, leading to inflated uncertainty.
 
 To analyze the relationship between gender and voting preference, we fit a survey-weighted logistic regression model, which adjusted for stratification effects and unequal selection probabilities. Since the dependent variable (voting for the Liberal Party) was binary (1 = Yes, 0 = No), logistic regression was the appropriate modeling choice (Lumley, 2010). The model is specified as:
 
-$$\log\left(\frac{P(VoteLiberal = 1)}{1 - P(VoteLiberal = 1)}\right) = \beta_0 + \beta_1 \times \text{Gender}_{\text{female}} + \beta_2 \times \text{Age}$$\
+$$\log\left(\frac{P(VoteLiberal = 1)}{1 - P(VoteLiberal = 1)}\right) = \beta_0 + \beta_1 \times \text{Gender}_{\text{male}} + \beta_2 \times \text{Age}$$\
 
-Here, $\beta_1$ represents the effect of gender. If the corresponding odds ratio $e^{\beta_1}$ is greater than 1, it suggests that women are more likely to vote for the Liberal Party compared to men. If the odds ratio is less than 1, it suggests women are less likely to vote Liberal compared to men. Similarly, $\beta_2$ captures the influence of age. An odds ratio greater than 1 indicates that an increase in age is associated with a higher likelihood of voting for the Liberal Party, while an odds ratio less than 1 suggests the opposite.
+Here, $\beta_1$ represents the effect of gender. If the corresponding odds ratio $e^{\beta_1}$ is greater than 1, it suggests that women are more likely to vote for the Liberal Party compared to men. If the odds ratio is less than 1, it suggests women are less likely to vote Liberal compared to men. Similarly, $\beta_2$ captures the influence of age. An odds ratio greater than 1 would indicate that an increase in age is associated with a higher likelihood of voting for the Liberal Party, while an odds ratio less than 1 suggests the opposite.
 
 Since the dataset was collected using stratified sampling, failing to account for this in the regression model would lead to biased coefficient estimates and incorrect standard errors. We apply survey-weighted logistic regression (svyglm()) from the survey package in R, incorporating design weights and finite population correction (Lumley, 2010).
 
@@ -351,7 +351,10 @@ tab_model(mod_phone)
 
 ```
 
-The results from the survey-weighted logistic regression indicate that gender and age are both significant predictors of voting for the Liberal Party. The odds ratio for gender (female) is 1.27 (95% CI: 1.08–1.49, p = 0.004), suggesting that women have 27% higher odds of voting Liberal compared to men. Since the odds ratio is greater than 1, this indicates a positive association between being female and voting Liberal. Similarly, the odds ratio for age is 1.01 (95% CI: 1.01–1.02, p \< 0.001), implying that older individuals are slightly more likely to vote Liberal. While the effect size for age is small, it is statistically significant.
+*Note* Logistic regression model for intent to vote liberal, using sex and age as predictors, were female is the baseline cateogry for sex 
+
+
+The results from the survey-weighted logistic regression indicate that gender and age are both significant predictors of voting for the Liberal Party. The odds ratio for gender (male) is 0.79% (95% CI: 0.67–0.92, p = 0.004), suggesting that men have 21% lower odds of voting Liberal compared to women, or equivalently, women have 27% higher odds of voting liberal than men. Since the odds ratio is lower than 1, this indicates a positive association between being female and voting Liberal, due to the fact that female is the baseline category. Similarly, the odds ratio for age is 1.01 (95% CI: 1.01–1.02, p \< 0.001), implying that older individuals are slightly more likely to vote Liberal. While the effect size for age is small, it is also statistically significant.
 
 # 5 Discussion
 
@@ -381,11 +384,15 @@ Since the CES 2019 dataset is publicly accessible and qualifies under U of T’s
 
 2.  Dekking, F. M., et al. (2005) *A Modern Introduction to Probability and Statistics: Understanding why and how.* Springer Science & Business Media.
 
-3.  Grolemund, G. (2014, July 16) *Introduction to R Markdown*. RStudio. <https://rmarkdown.rstudio.com/articles_intro.html>. (Last Accessed: April 4, 1991)
+3. Frederick, B. (2009). Are Female House Members Still More Liberal in a Polarized Era? The Conditional Nature of the Relationship Between Descriptive and Substantive Representation. Congress & the Presidency, 36(2), 181–202. https://doi.org/10.1080/07343460902948097
 
-4.  Vaughn, B. K. (2008). Data analysis using regression and multilevel/hierarchical models, by Gelman, A., & Hill, J \[Review of *Data analysis using regression and multilevel/hierarchical models, by Gelman, A., & Hill, J*\]. *Journal of Educational Measurement*, *45*(1), 94–97. Blackwell Publishing Inc. <https://doi.org/10.1111/j.1745-3984.2007.00053_2.x>
+3. Gidengil, E., Everitt, J., & Fournier, P. (2006). Gender and Vote Choice in the 2006 Canadian Election. <https://api.semanticscholar.org/CorpusID:140276235>
 
-5.  Ziegel, E. R., & Lohr, S. L. (2000). Sampling: Design and Analysis. *Technometrics*, *42*(2), 223-. <https://doi.org/10.2307/1271491>
+4.  Grolemund, G. (2014, July 16) *Introduction to R Markdown*. RStudio. <https://rmarkdown.rstudio.com/articles_intro.html>. (Last Accessed: April 4, 1991)
+
+5.  Vaughn, B. K. (2008). Data analysis using regression and multilevel/hierarchical models, by Gelman, A., & Hill, J \[Review of *Data analysis using regression and multilevel/hierarchical models, by Gelman, A., & Hill, J*\]. *Journal of Educational Measurement*, *45*(1), 94–97. Blackwell Publishing Inc. <https://doi.org/10.1111/j.1745-3984.2007.00053_2.x>
+
+6.  Ziegel, E. R., & Lohr, S. L. (2000). Sampling: Design and Analysis. *Technometrics*, *42*(2), 223-. <https://doi.org/10.2307/1271491>
 
 6.  
 
