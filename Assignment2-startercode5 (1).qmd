@@ -354,7 +354,7 @@ tab_model(mod_phone)
 *Note* Logistic regression model for intent to vote liberal, using sex and age as predictors, were female is the baseline cateogry for sex 
 
 
-The results from the survey-weighted logistic regression indicate that gender and age are both significant predictors of voting for the Liberal Party. The odds ratio for gender (male) is 0.79% (95% CI: 0.67–0.92, p = 0.004), suggesting that men have 21% lower odds of voting Liberal compared to women, or equivalently, women have 27% higher odds of voting liberal than men. Since the odds ratio is lower than 1, this indicates a positive association between being female and voting Liberal, due to the fact that female is the baseline category. Similarly, the odds ratio for age is 1.01 (95% CI: 1.01–1.02, p \< 0.001), implying that older individuals are slightly more likely to vote Liberal. While the effect size for age is small, it is also statistically significant.
+The results from the survey-weighted logistic regression indicate that gender and age are both significant predictors of voting for the Liberal Party. The odds ratio for male voting liberal is 0.79 (95% CI: 0.67–0.92, p = 0.004), suggesting that men have 21% lower odds of voting Liberal compared to women, or equivalently, women have 27% higher odds of voting liberal than men. Since the odds ratio is lower than 1, this indicates a positive association between being female and voting Liberal, due to the fact that female is the baseline category. Similarly, the odds ratio for age is 1.01 (95% CI: 1.01–1.02, p \< 0.001), implying that older individuals are slightly more likely to vote Liberal. While the effect size for age is small, it is also statistically significant.
 
 # 5 Discussion
 
