@@ -40,7 +40,7 @@ The results of this study contribute to the broader literature on gender and vot
 
 The analysis draws from the 2019 Canadian Federal Election Study (CES), which was collected using stratitifed random sampling by gender. Gender contained three levels, male, female and other. The total male population and total female population were retrieved from the 2021 Census of Population Statistics Canada. In 2021, 50.7% of the Canadian population were women (18.77 million out of 37.6 million). For the CES, data was obtained via a phone survey where 2,769 responses were obtained with only 41.7% of the respondents being female. The participants were asked a series of questions regarding their sociodemographic background and their intent to vote in the upcoming election, including interest in the election, likelihood to vote, and intended vote choice.
 
-In this study, the data cleaning involved three main steps. First, we dichotomized the primary outcome variable, voting intention for the Liberal party. Second, entries with missing or invalid responses for intended party or gender were excluded. Lastly, only male and female responders were considered given the small number of people in the other gender categories. The small sample size of the other category could limit meaningful statistical analysis and may have led to unreliable estimates. Given this, we chose to exclude this category to ensure more stable and interpretable results. We acknowledge that this decision reduced the inclusivity of our analysis and may overlook important differences in experiences. Future research with a larger and more representative sample should aim to better capture gender diversity.
+In this study, the data cleaning involved three main steps. First, we dichotomized the primary outcome variable, voting intention for the Liberal party, using the party they intended to vote for. Second, entries with missing or invalid responses for intended party or gender were excluded. Lastly, only male and female responders were considered given the small number of people in the other gender categories. The small sample size of the other category could limit meaningful statistical analysis and may have led to unreliable estimates. Given this, we chose to exclude this category to ensure more stable and interpretable results. We acknowledge that this decision reduced the inclusivity of our analysis and may overlook important differences in experiences. Future research with a larger and more representative sample should aim to better capture gender diversity.
 
 ```{r, include = FALSE}
 phone <- phone_data%>%
@@ -103,7 +103,7 @@ ggplot(plot_data, aes(x = factor(gender, levels = c(1, 2), labels = c("Male", "F
 
 # 3 Methods
 
-This study investigates whether gender influences the likelihood of voting for the Liberal Party, using data from the 2019 Canadian Federal Election Study (CES), which was collected through stratified random sampling. Since stratified sampling ensures representation across key subgroups, all statistical estimates—including the proportion of Liberal voters and the logistic regression model predicting voting likelihood—account for survey weighting and finite population correction (FPC) (Lohr, 2019).
+This study uses data that was collected through stratified random sampling. Since this method ensures representation across all subgroups, all statistical estimates—including the proportion of Liberal voters and the logistic regression model predicting voting likelihood—account for survey weighting and finite population correction (FPC) (Lohr, 2019).
 
 To estimate the proportion of Liberal voters, we use a weighted mean across strata. The estimated proportion is calculated as:
 
@@ -117,7 +117,7 @@ where $n_h$ is the sample size within each stratum, $z_\frac{\alpha}{2}$​ is t
 
 To analyze the relationship between gender and voting preference, we fit a survey-weighted logistic regression model, which adjusted for stratification effects and unequal selection probabilities. Since the dependent variable (voting for the Liberal Party) was binary (1 = Yes, 0 = No), logistic regression was the appropriate modeling choice (Lumley, 2010). The model is specified as:
 
-$$\log\left(\frac{P(VoteLiberal = 1)}{1 - P(VoteLiberal = 1)}\right) = \beta_0 + \beta_1 \times \text{Gender}_{\text{male}} + \beta_2 \times \text{Age}$$\
+$$\log\left(\frac{P(VoteLiberal = 1)}{1 - P(VoteLiberal = 1)}\right) = \beta_0 + \beta_1 \times \text{Gender}_{\text{male}} + \beta_2 \times \text{Age}$$
 
 We used logistic regression for this analysis because our dependent variable, voting for the Liberal Party, is binary (1 = Yes, 0 = No). This is because logistic regression models the log-odds of voting Liberal rather than predicting a direct probability, which allows to estimate the likelihood of voting Liberal while ensuring that predicted probabilities stay within the valid range of 0 and 1.
 
@@ -254,9 +254,6 @@ kable(
 
 ```
 
-```         
-```
-
 **Table 1** presents the estimated proportion of voters supporting the Liberal party, along with their 95% confidence intervals, calculated using a weighted mean across strata. The overall proportion of Liberal voters is 0.333, with a confidence interval of (0.315, 0.351), showing a stable estimate.
 
 Looking at gender differences, females have a higher estimated proportion of Liberal voters (0.360, CI: 0.332, 0.388) compared to males (0.305, CI: 0.283, 0.327). Since these confidence intervals do not overlap much, it suggests that females are more likely to vote Liberal than males. This aligns with the logistic regression results, which also showed that males were less likely to vote Liberal. The male and female total population values were retrieved from StatsCan, ensuring accurate weighting in the analysis. The "Other" category was omitted due to a small sample size, which made it difficult to compute stable survey weights and reliable confidence intervals. The finite population correction (FPC) was applied to adjust for sampling, ensuring the estimates accurately reflect the population.
@@ -358,7 +355,7 @@ model_summary <- data.frame(
 # Print Logistic Regression Table
 kable(
   model_summary, 
-  col.names = c("Variable", "Estimate", "Standard Error", "95% CI Lower", "95% CI Upper", "p-value"), 
+  col.names = c("Variable", "Log Odds", "Standard Error", "95% CI Lower", "95% CI Upper", "p-value"), 
   align = "c", 
   caption = "Survey-Weighted Logistic Regression Results for Voting Liberal looking at Gender and Age"
 ) %>%
@@ -371,7 +368,7 @@ kable(
 
 **Table 2** shows the logistic regression results, analyzing how gender and age influence the likelihood of voting Liberal. The results indicate that females are more likely to vote Liberal than males. The coefficient for males ($\beta$ = -0.239, p = 0.004) is negative, meaning that being male decreases the log-odds of voting Liberal. Since the confidence interval (-0.400, -0.079) does not include zero, this effect is statistically significant. Age is positively associated with voting Liberal ($\beta$ = 0.011, p \< 0.001), meaning that as individuals get older, their log-odds of voting Liberal increase. The confidence interval (0.006, 0.015) confirms this significance. The intercept ($\beta$ = -1.120, p \< 0.001) represents the log-odds of voting Liberal for a female at age 0, suggesting that at the baseline, the probability of voting Liberal is low.
 
-To better interpret these log-odds, we exponentiated the coefficients. Holding age constant, the odds of voting Liberal for males are exp(-0.239) ≈ 0.787 times the odds for females, confirming that males have a lower probability of voting Liberal. The inverse of the odds ratio for men voting liberal is 1.2706 which indicates that women had 27% higher odds of voting Liberal compared to men. Similarly, for each additional year of age, the odds of voting Liberal increase by exp(0.011) ≈ 1.011 times, meaning that older individuals are slightly more likely to vote Liberal, this result is not as significant as the difference observed by gender, but it is still statistically significant. Overall, Table 2 confirms that females are more likely to vote Liberal than males, and that age is positively associated with supporting the Liberal party.
+To better interpret these log-odds, we exponentiated the coefficients to obtain the odds. Holding age constant, the odds of voting Liberal for males are exp(-0.239) ≈ 0.787 times the odds for females, confirming that males have a lower probability of voting Liberal. Equivalently, using the inverse of the odds ratio for men voting liberal is 1.2706 which indicates that women had 27% higher odds of voting Liberal compared to men. Similarly, for each additional year of age for people of the same gender, the odds of voting Liberal increase by exp(0.011) ≈ 1.011 times, meaning that older individuals are slightly more likely to vote Liberal, this result is not as significant as the difference observed by gender, but it is still statistically significant. Overall, Table 2 confirms that females are more likely to vote Liberal than males, and that age is positively associated with supporting the Liberal party.
 
 # 5 Discussion
 
@@ -389,7 +386,7 @@ However, all analytical processes, statistical modeling, interpretations, and co
 
 # 7 Ethics Statement
 
-The analysis was designed with reproducibility in mind, by thoroughly documenting the methods f the regression and data cleaning. The data cleaning process was explained step-by-step, clearly explaining which observations were not included in the analysis due to the small sample size, how is the data stratified, and which is our stratification variable, ensuring that other researchers can precisely replicate our steps to verify the findings.
+The analysis was designed with reproducibility in mind, by thoroughly documenting the methods for the regression and data cleaning. The data cleaning process was explained step-by-step, clearly explaining which observations were not included in the analysis due to the small sample size, how is the data stratified, and which is our stratification variable, ensuring that other researchers can precisely replicate our steps to verify the findings. Additionally the data sources are clearly documented and open source.
 
 Since the CES 2019 dataset is publicly accessible and qualifies under U of T’s Research Ethics Policy exemption criteria, our study does not require Research Ethics Board approval for the report to be publicly available. Moreover, the data have been anonymized and does not include direct identifiers, safeguarding the privacy of individual participants while still providing valuable insights into voting behavior.
 
